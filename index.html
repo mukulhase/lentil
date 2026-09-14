@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#f4efe5">
+  <meta name="description" content="Identify lenticular sheets, calibrate a printer, and make two-image flip prints.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Lentil">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Lentil — lenticular calibration lab</title>
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="#start" aria-label="Lentil home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Lentil</span>
+    </a>
+    <button id="installButton" class="quiet-button" hidden>Install app</button>
+  </header>
+
+  <main>
+    <section id="start" class="hero panel">
+      <p class="eyebrow">Lenticular calibration lab</p>
+      <h1>From mystery sheet<br>to matched print.</h1>
+      <p class="lede">Use your phone to estimate the lens pitch, then make one guided printer test for the exact result.</p>
+      <div class="hero-actions">
+        <a class="button primary" href="#screen-calibration">Calibrate this screen</a>
+        <a class="button secondary" href="#print-test">I know my approximate LPI</a>
+      </div>
+      <div class="principle-grid" aria-label="Workflow summary">
+        <div><span>01</span><strong>Measure screen</strong><small>Match a common card</small></div>
+        <div><span>02</span><strong>Estimate sheet</strong><small>Compare optical bands</small></div>
+        <div><span>03</span><strong>Match printer</strong><small>One physical test</small></div>
+      </div>
+    </section>
+
+    <section id="screen-calibration" class="panel step-panel">
+      <div class="section-heading">
+        <p class="eyebrow">Step 1 · Screen scale</p>
+        <h2>Match a bank card</h2>
+        <p>Lay a standard credit or ID card over the bar. Adjust until both ends line up. The card should be <strong>85.60 mm</strong> wide.</p>
+      </div>
+      <div class="card-calibrator">
+        <div id="cardBar" class="card-bar" role="img" aria-label="Adjustable 85.60 millimetre reference bar">
+          <span></span><b>85.60 mm</b><span></span>
+        </div>
+        <div class="calibration-controls">
+          <button class="nudge" data-nudge="-5" aria-label="Make bar much smaller">−−</button>
+          <button class="nudge" data-nudge="-1" aria-label="Make bar smaller">−</button>
+          <output id="screenScaleOutput">Adjust the bar</output>
+          <button class="nudge" data-nudge="1" aria-label="Make bar larger">+</button>
+          <button class="nudge" data-nudge="5" aria-label="Make bar much larger">++</button>
+        </div>
+        <button id="saveScreenScale" class="button primary">The ends match</button>
+      </div>
+      <details>
+        <summary>No bank card?</summary>
+        <p>Use any object with a trustworthy width, then enter it below.</p>
+        <label class="field compact">Reference width <span><input id="referenceWidth" type="number" min="20" max="250" step="0.01" value="85.60"> mm</span></label>
+      </details>
+    </section>
+
+    <section id="sheet-test" class="panel step-panel">
+      <div class="section-heading">
+        <p class="eyebrow">Step 2 · Sheet estimate</p>
+        <h2>Find the calmest band</h2>
+        <p>Set a rough value if the package has one. Place the sheet flat on the display, with its grooves parallel to the stripes, then tilt left and right. Pick the band that changes most uniformly.</p>
+      </div>
+      <div class="field-grid">
+        <label class="field">Approximate LPI <input id="nominalLpi" type="number" inputmode="decimal" min="10" max="200" step="1" value="60"></label>
+        <label class="field">Search width
+          <select id="searchWidth">
+            <option value="30">Broad · ±15%</option>
+            <option value="16">Normal · ±8%</option>
+            <option value="8">Narrow · ±4%</option>
+          </select>
+        </label>
+      </div>
+      <div id="screenCapability" class="notice" role="status">Calibrate the screen to check its useful range.</div>
+      <button id="openPattern" class="button primary" disabled>Open full-screen test</button>
+      <div id="patternOverlay" class="pattern-overlay" hidden>
+        <canvas id="pitchCanvas"></canvas>
+        <div class="pattern-topbar">
+          <strong>Choose the calmest band</strong>
+          <button id="closePattern" aria-label="Close pattern">×</button>
+        </div>
+        <div id="bandPicker" class="band-picker" aria-label="Pitch test band choices"></div>
+        <p class="pattern-help">Tilt left ↔ right · lift the sheet to tap A–G</p>
+      </div>
+      <div id="sheetResult" class="result-card" hidden>
+        <span>Estimated sheet pitch</span>
+        <strong><output id="estimatedLpi">—</output> LPI</strong>
+        <small id="estimatePrecision"></small>
+      </div>
+    </section>
+
+    <section id="print-test" class="panel step-panel">
+      <div class="section-heading">
+        <p class="eyebrow">Step 3 · Printer match</p>
+        <h2>Generate the physical test</h2>
+        <p>This is the measurement that matters. Use the same printer, paper, quality setting, and sheet orientation as the final artwork.</p>
+      </div>
+      <div class="field-grid three">
+        <label class="field">Center LPI <input id="printCenterLpi" type="number" min="10" max="200" step="0.01" value="60"></label>
+        <label class="field">Increment
+          <select id="printStep">
+            <option value="0.1">Coarse · 0.10</option>
+            <option value="0.05">Medium · 0.05</option>
+            <option value="0.01">Fine · 0.01</option>
+          </select>
+        </label>
+        <label class="field">Paper
+          <select id="paperSize">
+            <option value="letter">US Letter</option>
+            <option value="a4">A4</option>
+          </select>
+        </label>
+      </div>
+      <div class="button-row">
+        <button id="downloadPrintTest" class="button primary">Download printable SVG</button>
+        <button id="openPrintTest" class="button secondary">Open print view</button>
+      </div>
+      <p class="fine-print">Print at <strong>100% / Actual size</strong>. Disable Fit, Shrink, and borderless expansion. The 100 mm check line must measure exactly 100 mm.</p>
+      <div class="printed-answer">
+        <label class="field">Best matching printed band <select id="winningBand"></select></label>
+        <button id="acceptPrintedPitch" class="button secondary">Use this pitch</button>
+      </div>
+      <div id="printerResult" class="result-card" hidden>
+        <span>Calibrated working pitch</span>
+        <strong><output id="workingLpi">—</output> LPI</strong>
+        <small>Valid for this sheet + printer + paper + print settings.</small>
+      </div>
+    </section>
+
+    <section id="interlacer" class="panel step-panel">
+      <div class="section-heading">
+        <p class="eyebrow">Step 4 · Make a flip</p>
+        <h2>Interlace two images</h2>
+        <p>Choose two equally composed images. The output alternates them beneath every lens.</p>
+      </div>
+      <div class="upload-grid">
+        <label class="upload-card"><span>A</span><strong>First view</strong><input id="imageA" type="file" accept="image/*"><small id="imageAName">Choose image</small></label>
+        <label class="upload-card"><span>B</span><strong>Second view</strong><input id="imageB" type="file" accept="image/*"><small id="imageBName">Choose image</small></label>
+      </div>
+      <div class="field-grid three">
+        <label class="field">Width <span><input id="outputWidth" type="number" min="10" max="500" step="0.1" value="101.6"> mm</span></label>
+        <label class="field">Height <span><input id="outputHeight" type="number" min="10" max="500" step="0.1" value="152.4"> mm</span></label>
+        <label class="field">Output resolution
+          <select id="outputPpi">
+            <option value="600">600 PPI</option>
+            <option value="720" selected>720 PPI</option>
+            <option value="1200">1200 PPI</option>
+            <option value="1440">1440 PPI</option>
+          </select>
+        </label>
+      </div>
+      <div class="field-grid">
+        <label class="field">Lens phase <input id="lensPhase" type="range" min="0" max="1" step="0.01" value="0"></label>
+        <label class="check-field"><input id="reverseViews" type="checkbox"> Reverse A/B viewing order</label>
+      </div>
+      <div id="outputBudget" class="notice">Choose two images to preflight the output.</div>
+      <button id="buildInterlace" class="button primary" disabled>Build print-ready image</button>
+      <div id="renderProgress" class="progress" hidden><span></span><output>Preparing…</output></div>
+      <canvas id="outputCanvas" hidden></canvas>
+      <div id="downloadArea" class="button-row" hidden>
+        <button id="downloadPng" class="button primary">Download PNG</button>
+        <button id="downloadWrappedSvg" class="button secondary">Download exact-size SVG</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Everything stays on this device. Screen measurements are estimates; the printed pitch test is authoritative.</p>
+    <button id="resetApp" class="text-button">Reset calibration</button>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js?v=1"></script>
+</body>
+</html>
