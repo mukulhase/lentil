@@ -42,25 +42,25 @@
       <div class="section-heading">
         <p class="eyebrow">Step 1 · Screen scale</p>
         <h2>Match a bank card</h2>
-        <p>Lay a standard credit or ID card over the bar. Adjust until both ends line up. The card should be <strong>85.60 mm</strong> wide.</p>
+        <p id="cardInstructions">Place a standard credit or ID card over the outline. Its 85.60 mm long edge will follow the viewport’s long axis.</p>
       </div>
       <div class="card-calibrator">
-        <div id="cardBar" class="card-bar" role="img" aria-label="Adjustable 85.60 millimetre reference bar">
+        <div id="cardBar" class="card-bar" role="img" aria-label="Adjustable bank card outline using its 85.60 millimetre long edge">
           <span></span><b>85.60 mm</b><span></span>
         </div>
         <div class="calibration-controls">
-          <button class="nudge" data-nudge="-5" aria-label="Make bar much smaller">−−</button>
-          <button class="nudge" data-nudge="-1" aria-label="Make bar smaller">−</button>
+          <button class="nudge" data-nudge="-5" aria-label="Make reference much shorter">−−</button>
+          <button class="nudge" data-nudge="-1" aria-label="Make reference shorter">−</button>
           <output id="screenScaleOutput">Adjust the bar</output>
-          <button class="nudge" data-nudge="1" aria-label="Make bar larger">+</button>
-          <button class="nudge" data-nudge="5" aria-label="Make bar much larger">++</button>
+          <button class="nudge" data-nudge="1" aria-label="Make reference longer">+</button>
+          <button class="nudge" data-nudge="5" aria-label="Make reference much longer">++</button>
         </div>
         <button id="saveScreenScale" class="button primary">The ends match</button>
       </div>
       <details>
         <summary>No bank card?</summary>
-        <p>Use any object with a trustworthy width, then enter it below.</p>
-        <label class="field compact">Reference width <span><input id="referenceWidth" type="number" min="20" max="250" step="0.01" value="85.60"> mm</span></label>
+        <p>Use any object with a trustworthy length, then enter it below. Match the two highlighted ends.</p>
+        <label class="field compact">Reference length <span><input id="referenceLength" type="number" min="20" max="250" step="0.01" value="85.60"> mm</span></label>
       </details>
     </section>
 
@@ -179,6 +179,6 @@
   </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js?v=1"></script>
+  <script type="module" src="app.js?v=2"></script>
 </body>
 </html>

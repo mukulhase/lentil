@@ -1,5 +1,6 @@
 import {
-  CARD_WIDTH_MM,
+  CARD_LONG_EDGE_MM,
+  CARD_SHORT_EDGE_MM,
   addPngDensity,
   makePitchTestSvg,
   outputGeometry,
@@ -9,15 +10,15 @@ import {
   roundTo,
   screenPpi,
   viewForColumn,
-} from './core.js?v=1';
+} from './core.js?v=2';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const state = {
-  cssPixelsPerMm: Number(localStorage.getItem('lentil.cssPixelsPerMm')) || 0,
+  cssPixelsPerMm: Number(localStorage.getItem('lentil.cssPixelsPerMm.longEdgeV1')) || 0,
   estimatedLpi: Number(localStorage.getItem('lentil.estimatedLpi')) || 0,
   workingLpi: Number(localStorage.getItem('lentil.workingLpi')) || 0,
-  barWidth: 0,
+  barLength: 0,
   sweepStage: 0,
   sweepCenter: 60,
   sweepSpan: 15,
@@ -47,21 +48,34 @@ function calibratedPpi() {
 }
 
 function initializeCardBar() {
-  const reference = Number($('#referenceWidth').value) || CARD_WIDTH_MM;
-  const savedCssWidth = state.cssPixelsPerMm ? state.cssPixelsPerMm * reference : 0;
-  state.barWidth = savedCssWidth || Math.min(324, window.innerWidth - 72);
+  const reference = Number($('#referenceLength').value) || CARD_LONG_EDGE_MM;
+  const savedCssLength = state.cssPixelsPerMm ? state.cssPixelsPerMm * reference : 0;
+  state.barLength = savedCssLength || Math.min(360, Math.max(window.innerWidth, window.innerHeight) * .48);
   renderCardBar();
 }
 
 function renderCardBar() {
-  const maxWidth = Math.max(160, $('.card-calibrator').clientWidth - 42);
-  state.barWidth = Math.min(maxWidth, Math.max(120, state.barWidth));
-  $('#cardBar').style.width = `${state.barWidth}px`;
-  const reference = Number($('#referenceWidth').value) || CARD_WIDTH_MM;
-  $('#cardBar b').textContent = `${reference.toFixed(2)} mm`;
+  const cardAspect = CARD_SHORT_EDGE_MM / CARD_LONG_EDGE_MM;
+  const portrait = window.innerHeight >= window.innerWidth;
+  const availableWidth = $('.card-calibrator').clientWidth - 42;
+  const availableHeight = window.innerHeight * .88;
+  const maxLongEdge = portrait
+    ? Math.min(720, availableHeight, availableWidth / cardAspect)
+    : Math.min(900, availableWidth, availableHeight / cardAspect);
+  state.barLength = Math.min(Math.max(180, maxLongEdge), Math.max(120, state.barLength));
+  const card = $('#cardBar');
+  card.classList.toggle('landscape', !portrait);
+  card.style.height = `${portrait ? state.barLength : state.barLength * cardAspect}px`;
+  card.style.width = `${portrait ? state.barLength * cardAspect : state.barLength}px`;
+  card.setAttribute('aria-label', `${portrait ? 'Portrait' : 'Landscape'} bank card outline; match the ${CARD_LONG_EDGE_MM.toFixed(2)} millimetre long edge`);
+  const reference = Number($('#referenceLength').value) || CARD_LONG_EDGE_MM;
+  card.querySelector('b').textContent = `${reference.toFixed(2)} mm`;
+  $('#cardInstructions').innerHTML = portrait
+    ? `Place the card upright over the outline. Adjust until its <strong>top and bottom</strong> edges line up; the side edges are a cross-check.`
+    : `Place the card sideways over the outline. Adjust until its <strong>left and right</strong> edges line up; the top and bottom edges are a cross-check.`;
   $('#screenScaleOutput').textContent = state.cssPixelsPerMm
     ? `${Math.round(calibratedPpi())} estimated PPI`
-    : `${Math.round(state.barWidth)} screen px`;
+    : `${Math.round(state.barLength)} screen px along the long edge`;
 }
 
 function updateCapability() {
@@ -365,20 +379,23 @@ function restoreState() {
 }
 
 function resetApp() {
-  ['cssPixelsPerMm', 'estimatedLpi', 'workingLpi'].forEach(key => localStorage.removeItem(`lentil.${key}`));
+  ['cssPixelsPerMm', 'cssPixelsPerMm.heightV1', 'cssPixelsPerMm.longEdgeV1', 'estimatedLpi', 'workingLpi'].forEach(key => localStorage.removeItem(`lentil.${key}`));
   location.reload();
 }
 
 $$('.nudge').forEach(button => button.addEventListener('click', () => {
-  state.barWidth += Number(button.dataset.nudge);
+  state.barLength += Number(button.dataset.nudge);
   state.cssPixelsPerMm = 0;
   renderCardBar();
 }));
-$('#referenceWidth').addEventListener('input', renderCardBar);
+$('#referenceLength').addEventListener('input', renderCardBar);
 $('#saveScreenScale').addEventListener('click', () => {
-  const physicalWidth = Number($('#referenceWidth').value);
-  const renderedWidth = $('#cardBar').getBoundingClientRect().width;
-  saveNumber('cssPixelsPerMm', renderedWidth / physicalWidth);
+  const portrait = window.innerHeight >= window.innerWidth;
+  const physicalLength = Number($('#referenceLength').value);
+  const bounds = $('#cardBar').getBoundingClientRect();
+  const renderedLength = portrait ? bounds.height : bounds.width;
+  state.cssPixelsPerMm = renderedLength / physicalLength;
+  localStorage.setItem('lentil.cssPixelsPerMm.longEdgeV1', String(state.cssPixelsPerMm));
   renderCardBar();
   updateCapability();
   toast(`Screen scale saved · about ${calibratedPpi().toFixed(0)} PPI`);
@@ -388,6 +405,7 @@ $('#saveScreenScale').addEventListener('click', () => {
 $('#openPattern').addEventListener('click', openPattern);
 $('#closePattern').addEventListener('click', closePattern);
 window.addEventListener('resize', () => {
+  renderCardBar();
   if (!$('#patternOverlay').hidden && state.screenCandidates.length) drawPitchBands(state.screenCandidates);
 });
 ['printCenterLpi', 'printStep'].forEach(id => $(`#${id}`).addEventListener('input', updatePrinterBands));

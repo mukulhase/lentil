@@ -1,4 +1,5 @@
-export const CARD_WIDTH_MM = 85.6;
+export const CARD_LONG_EDGE_MM = 85.6;
+export const CARD_SHORT_EDGE_MM = 53.98;
 
 export function roundTo(value, places = 2) {
   const factor = 10 ** places;

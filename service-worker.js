@@ -1,5 +1,5 @@
-const CACHE = 'lentil-v1';
-const ASSETS = ['./', './index.html', './styles.css', './app.js?v=1', './core.js?v=1', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'lentil-v2';
+const ASSETS = ['./', './index.html', './styles.css', './app.js?v=2', './core.js?v=2', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));

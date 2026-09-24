@@ -6,7 +6,8 @@ processing stays in the browser.
 
 ## What it does
 
-1. Calibrates the physical scale of a phone display against a bank card.
+1. Calibrates the physical scale of a phone display against the 85.60 mm long
+   edge of a bank card, automatically aligning it with the viewport's long axis.
 2. Narrows an unknown sheet pitch with three on-screen optical comparisons.
 3. Generates an exact-size SVG printer test with a 100 mm scaling check.
 4. Records the working pitch for that sheet, printer, paper, and driver setup.

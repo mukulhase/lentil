@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  CARD_LONG_EDGE_MM,
+  CARD_SHORT_EDGE_MM,
   addPngDensity,
   makePitchTestSvg,
   outputGeometry,
@@ -9,6 +11,12 @@ import {
   screenPpi,
   viewForColumn,
 } from './core.js';
+
+test('portrait card reference uses the longer edge vertically', () => {
+  assert.equal(CARD_LONG_EDGE_MM, 85.6);
+  assert.equal(CARD_SHORT_EDGE_MM, 53.98);
+  assert.ok(CARD_SHORT_EDGE_MM / CARD_LONG_EDGE_MM < 1);
+});
 
 test('screen calibration converts CSS scale and DPR to physical PPI', () => {
   assert.ok(Math.abs(screenPpi(460 / 25.4 / 3, 3) - 460) < 1e-9);
